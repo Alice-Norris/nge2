@@ -151,3 +151,14 @@ def draw_sheet_canv(imgs: dict, canvas: Canvas, char_list: list):
     img = imgs["img" + str(img_num)]
     img_tag = "img" + str(img_num)
     canvas.create_image(x_grid*41+2, y_grid*41+2, image=img, tag=img_tag, anchor=NW)
+
+def update_draw_canvas(canvas: Canvas, char_data: list):
+  ui_col_dict = {
+    0 : "#ffffff",
+    1 : "#AAAAAA",
+    2 : "#555555",
+    3 : "#000000",
+  }
+  for index, pixel in enumerate(char_data):
+    color_str = ui_col_dict[pixel]
+    canvas.itemconfig("rect" + str(index), fill=color_str)

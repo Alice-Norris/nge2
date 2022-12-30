@@ -180,10 +180,12 @@ class userInterface:
     old_active_char = cls.program.active_char
     new_active_char = (event.x // 40) + (event.y // 40) * 16
     if old_active_char != new_active_char:
-      GL.select_char(event.widget, old_active_char, new_active_char)
       cls.program.active_char = new_active_char
-
-
+      char_data = cls.program.get_char_data()
+      draw_canvas = cls.root.nametowidget('.draw_frame.draw_canvas')
+      GL.update_draw_canvas(draw_canvas, char_data)
+      GL.select_char(event.widget, old_active_char, new_active_char)
+      
   def scroll_callback(cls, *args):
     hex_header_txt = cls.root.nametowidget('.hex_txt_header')
     hex_data_txt = cls.root.nametowidget('.hex_txt_data')
