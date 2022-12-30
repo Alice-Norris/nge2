@@ -31,7 +31,7 @@ def grid_setup(canvas, cols, rows, select_rect: bool):
       canvas.create_rectangle(x_start+1, y_start+1, x_start+42, y_start+42, fill=None, tag=grid_tag_str)
       grid_tag += 1
   if select_rect:
-    canvas.create_rectangle(1, 1, 42, 42, tag="select_rect", width=3)
+    canvas.create_rectangle(1, 1, 42, 42, tag="select_rect", width=3, outline="#00ff00")
 # Setting up hex_header display. Each row represents a character address.
 def hex_row_setup(text: Text):
   x = 0

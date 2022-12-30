@@ -185,7 +185,7 @@ class userInterface:
       draw_canvas = cls.root.nametowidget('.draw_frame.draw_canvas')
       GL.update_draw_canvas(draw_canvas, char_data)
       GL.select_char(event.widget, old_active_char, new_active_char)
-      
+
   def scroll_callback(cls, *args):
     hex_header_txt = cls.root.nametowidget('.hex_txt_header')
     hex_data_txt = cls.root.nametowidget('.hex_txt_data')
@@ -210,7 +210,6 @@ class userInterface:
     )
     cls.program.save_as(file_buff)
 
-
   def file_view_sel_callback(cls, event):
     treeview = event.widget
     item_id = treeview.selection()[0]
@@ -219,6 +218,10 @@ class userInterface:
       sheet_canvas = cls.root.nametowidget('.sheet_frame.sheet_canvas')
       ch_id = int(item_id[9:])
       GL.select_char(sheet_canvas, cls.program.active_char, ch_id)
+      char_data = cls.program.get_char_data()
+      draw_canvas = cls.root.nametowidget('.draw_frame.draw_canvas')
+      GL.update_draw_canvas(draw_canvas, char_data)
+
     
   def add_sh_callback(cls):
     GL.add_sheet_dialog()

@@ -129,6 +129,7 @@ class NGE_Logic:
   def get_char_data(cls):
     char_data = cls.active_book.sheets[cls.active_sheet][cls.active_char].data
     return char_data
+  
   # Creates image data, used by draw_sheet_canv
   def create_img_data(cls, char_data: list):
     img_data = b''
