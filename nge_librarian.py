@@ -28,23 +28,23 @@ class Librarian:
     #   cls.__current_book = read_file(filepath, filename)
 
     def load(cls, file_buffer):
-      cls.__current_book = read_file(file_buffer)
-      
-    def save(cls, file_buffer):
-      write_file(file_buffer, cls.__current_book)
+      cls.__current_book = copy(read_file(file_buffer))
+      print("lmao")
 
-    def sheet_list(cls):
+    def save(cls, file_buffer, book: Book):
+      write_file(file_buffer, book)
+
+    def sheet_name_list(cls):
       sheet_list = []
       for sheet in cls.__current_book.sheets:
         sheet_list.append(sheet.name)
       return sheet_list
 
-    def char_list(cls, sheet_id: int):
-      char_list = []
-      sheet = cls.__current_sheet
-      for char in sheet.char_list:
-        char_list.append(char.data)
-      return char_list
+    def char_name_list(cls):
+      name_list = []
+      for char in cls.__current_sheet.char_list:
+        name_list.append(char.name)
+      return name_list
 
     def book_name(cls):
       return cls.__current_book.name
@@ -61,6 +61,10 @@ class Librarian:
       return index
 
     def borrow(cls):
-      new_book = copy(cls.__current_book)
-      return new_book
+      return cls.__current_book
     
+    def add_sheet(cls, sheet_name: str):
+      cls.__current_book.add_sheet(sheet_name)
+    
+    def add_char(cls, char_name: str):
+      cls.__current_sheet.add_char(char_name)

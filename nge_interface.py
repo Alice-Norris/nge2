@@ -1,227 +1,288 @@
-from tkinter.ttk import Frame, Button, Treeview, Scrollbar, Menubutton
-from tkinter import Canvas, Text, Menu, HORIZONTAL, VERTICAL, Tk, RAISED, SUNKEN, FALSE, filedialog
-from nge_widget_configs import frame_cfgs, subframe_cfgs, canvas_cfgs, view_cfg, btn_cfgs, scrollbar_cfgs, txt_cfgs, treeview_btn_cfgs
-import gui_logic as GL
-from nge_logic import NGE_Logic
+from tkinter.ttk import Frame, Button, Treeview, Scrollbar, LabelFrame, Label
+from nge_classes import AddSheetDialog, RemSheetDialog, AddCharDialog, RemCharDialog
+from math import floor, ceil
+from tkinter import Canvas, Text, Menu, FALSE
+import nge_widget_configs as cfgs
+import nge_gui_logic as gui
+
 ####  ("@./erasercur2.xbm", "erasercur2mask.xbm", "#000000", "#FFFFFF")
 
 class userInterface:
   # Each entry consists of a name as a key and the frame
   # as its value. str:frame_name : ttk.Frame:frame
+  widgets = {}
 
-  grid_opts = {}
-  images = {}
-
-  def __init__ (cls, root: Tk, logic: NGE_Logic):#, images: dict):
-    cls.program = logic
+  def __init__ (cls, root, char_data_list):#, images: dict):
     cls.root = root
-    cls.root.title("Nintendo Graphics Editor")
+    #cls.root.title("Nintendo Graphics Editor")
+    cls.char_data_list = char_data_list
+    cls.create_widgets()
+    cls.setup_widgets()
+    cls.root.setvar('active_char', 0)
+    cls.root.setvar('active_sheet', 0)
+    cls.root.setvar('fg_color', '#ffffff')
+    cls.root.setvar('bg_color', '#000000')
+
+  def create_widgets(cls):
     cls.mk_menus()
-    cls.mk_frames()
-    cls.mk_subframes()
-    cls.mk_canvases()
-    cls.mk_file_view()
-    cls.mk_scrollbars()
-    cls.mk_hex_txt()
-    cls.mk_tool_btns()
-    cls.mk_file_view_btns()
+    cls.mk_frames(cfgs.frame_cfgs)
+    cls.mk_subframes(cfgs.subframe_cfgs)
+    cls.mk_canvases(cfgs.canvas_cfgs)
+    cls.mk_treeview(cfgs.treeview_cfg)
+    cls.mk_scrollbars(cfgs.scrollbar_cfgs)
+    cls.mk_hex_txt(cfgs.txt_cfgs)
+    cls.mk_tool_btns(cfgs.tool_btn_cfgs)
+    cls.mk_treeview_btns(cfgs.treeview_btn_cfgs)
+    cls.mk_lbl_frames(cfgs.lbl_frame_cfgs)
+    cls.mk_lbls(cfgs.lbl_cfgs)
+
+  def setup_widgets(cls):
+    draw_canvas = cls.root.nametowidget('.nge.draw_frame.draw_canvas')
+    gui.draw_grid_setup(draw_canvas)
+    
+    sheet_canvas = cls.root.nametowidget('.nge.sheet_frame.sheet_canvas')
+    gui.sheet_grid_setup(sheet_canvas)
+
+    hex_txt = cls.root.nametowidget('.nge.hex_frame.hex_txt')
+    gui.hex_txt_setup(hex_txt)
+
+    col_palette = cls.root.nametowidget('.nge.draw_frame.draw_btn_frame.col_palette')
+    gui.col_palette_setup(col_palette)
+
+    treeview = cls.root.nametowidget('.nge.tree_frame.file_tree_view')
+    treeview_scroll = cls.root.nametowidget('.nge.tree_frame.tree_scrollbar')
+    gui.treeview_setup(treeview, treeview_scroll)
+
+
 
   def mk_menus(cls):
     window = cls.root.winfo_toplevel()
-    menu = Menu(window)
+    menu = Menu()
     window.option_add('*tearOff', FALSE)
     window.config(menu=menu)
     file_menu = Menu(menu)
     menu.add_cascade(label="File", menu=file_menu)
-    file_menu.add_command(label="Open...", command=cls.open_callback)
-    file_menu.add_command(label="Save As...", command=cls.save_as_callback)
-  # Creating frames for different program areas
-  def mk_frames(cls):
-    frame_iter = iter(frame_cfgs)
+    file_menu.add_command(label="Open...", command=cls.root.open_callback)
+    file_menu.add_command(label="Save As...", command=cls.root.save_as_callback)
+    file_menu.add_command(label="Quit")
 
-    for frame_cfg in range(len(frame_cfgs) // 2):
+  # Creating frames for different program areas
+  def mk_frames(cls, canvas_cfgs: list):
+    frame_iter = iter(canvas_cfgs)
+    
+    for frame_cfg in range(len(canvas_cfgs) // 2):
       cfg = next(frame_iter)
       grid_opts = next(frame_iter)
+      
+      gui.set_parent(cls.root, cfg)
 
-      cfg["master"] = cls.root
- 
       frame = Frame(**cfg)
+      frame.grid_propagate(0)
       frame.grid(**grid_opts)
 
   # Creating subframes, which go inside of frames for
   # organization
-  def mk_subframes(cls):
+  def mk_subframes(cls, subframe_cfgs):
     subframe_iter = iter(subframe_cfgs)
     
     for dict in range(len(subframe_cfgs) // 2):
       subframe_cfg = next(subframe_iter)
       subframe_grid_opts = next(subframe_iter)
-      parent = cls.root.nametowidget(subframe_grid_opts["in_"])
-      subframe_cfg["master"] = parent
+      
+      gui.set_parent(cls.root, subframe_cfg)
+
       frame = Frame(**subframe_cfg)
       frame.grid(**subframe_grid_opts)
 
   # Creating the sheet and draw canvases
-  def mk_canvases(cls):
+  def mk_canvases(cls, canvas_cfgs):
     canvas_iter = iter(canvas_cfgs)
 
     for dict in range(len(canvas_cfgs) // 2):
       canvas_cfg = next(canvas_iter)
       canvas_grid_opts = next(canvas_iter)
-      path = canvas_grid_opts["in_"]
       
-      canvas_cfg["master"] = cls.root.nametowidget(path)
+      gui.set_parent(cls.root, canvas_cfg)
 
       canvas = Canvas(**canvas_cfg)
+
+      if canvas_cfg["name"] == "draw_canvas":
+        canvas.bind('<ButtonRelease-1>', cls.draw_canvas_callback)
+        canvas.bind('<ButtonRelease-3>', cls.draw_canvas_callback)
+      elif canvas_cfg["name"] == "sheet_canvas":
+        canvas.bind('<ButtonRelease-1>', cls.sheet_canvas_callback)
+      elif canvas_cfg["name"] == "col_palette":
+        canvas.bind('<ButtonRelease-1>', cls.fg_callback)
+        canvas.bind('<ButtonRelease-3>', cls.bg_callback)
       canvas.grid(**canvas_grid_opts)
 
-  def mk_file_view(cls):
-    treeview_cfg = view_cfg[0]
-    treeview_grid_opts = view_cfg[1]
-    path = treeview_grid_opts["in_"]
+  def mk_treeview(cls, treeview_cfg):
+    treeview_iter = iter(treeview_cfg)
+    for dict in range(len(treeview_cfg) // 2):
+      treeview_cfg = next(treeview_iter)
+      treeview_grid_opts = next(treeview_iter)
+      
+      gui.set_parent(cls.root, treeview_cfg)
 
-    treeview_cfg["master"] = cls.root.nametowidget(path)
-    
-    view = Treeview(**treeview_cfg)
-    view.column("#0")
-    view.grid(**treeview_grid_opts)
+      view = Treeview(**treeview_cfg)
+      view.column("#0")
+      view.grid(**treeview_grid_opts)
 
-    view.bind('<<TreeviewSelect>>', cls.file_view_sel_callback)
+      view.bind('<ButtonRelease-1>', cls.treeview_callback)
 
   
-  def mk_file_view_btns(cls):
+  def mk_treeview_btns(cls, treeview_btn_cfgs):
     btn_iter = iter(treeview_btn_cfgs)
 
-    for dict in range(len(treeview_btn_cfgs) // 2):
+    for dict in range(len(cfgs.treeview_btn_cfgs) // 2):
       btn_cfg = next(btn_iter)
       btn_grid_opts = next(btn_iter)
+      if btn_cfg["name"] == "add_sh":
+        btn_cfg["command"] = cls.add_sh
+      elif btn_cfg["name"] == "rem_sh":
+        btn_cfg["command"] = cls.rem_sh
+      elif btn_cfg["name"] == "add_ch":
+        btn_cfg["command"] = cls.add_ch
+      else:
+        btn_cfg["command"] = cls.rem_ch
 
-      parent = cls.root.nametowidget(btn_grid_opts["in_"])
-      btn_cfg["master"] = parent
+      gui.set_parent(cls.root, btn_cfg)
 
       btn = Button(**btn_cfg)
       btn.grid(**btn_grid_opts)
 
-  def mk_tool_btns(cls):
-    btn_iter = iter(btn_cfgs)
+  def mk_tool_btns(cls, tool_btn_cfgs):
+    btn_iter = iter(tool_btn_cfgs)
 
-    for dict in range(len(btn_cfgs) // 2):
+    for dict in range(len(tool_btn_cfgs) // 2):
       btn_cfg = next(btn_iter)
       btn_grid_opts = next(btn_iter)
-      path = btn_grid_opts["in_"]
 
-      btn_cfg["master"] = cls.root.nametowidget(path)
+      gui.set_parent(cls.root, btn_cfg)
 
       #creating buttons
       btn = Button(**btn_cfg)
       btn.grid(**btn_grid_opts)
-      
-  def mk_scrollbars(cls):
+
+    cls.root.bind_class('tool_btn', '<ButtonRelease-1>', cls.tool_btn_callback)
+
+  def mk_scrollbars(cls, scrollbar_cfgs):
     scroll_iter = iter(scrollbar_cfgs)
     
     for dict in range(len(scrollbar_cfgs) // 2):
       scroll_cfg = next(scroll_iter)
       scroll_grid_opts = next(scroll_iter)
-      path =  scroll_grid_opts["in_"]
+      
+      gui.set_parent(cls.root, scroll_cfg)
 
-      scroll_cfg["master"] = cls.root.nametowidget(path)
- 
+      if scroll_cfg["name"] == "hex_scrollbar":
+        scroll_cfg["command"] = cls.scroll_hex_txt
       scroll = Scrollbar(**scroll_cfg)
       scroll.grid(**scroll_grid_opts)
 
-  def mk_hex_txt(cls):
+  def mk_hex_txt(cls, txt_cfgs):
     txt_iter = iter(txt_cfgs)
-
+    hex_scroll = cls.root.nametowidget('.nge.hex_frame.hex_scrollbar')
     for dict in range(len(txt_cfgs) // 2):
       txt_cfg = next(txt_iter)
       txt_grid_opts = next(txt_iter)
-      path = txt_grid_opts["in_"]
+      
+      gui.set_parent(cls.root, txt_cfg)
 
-      txt_cfg["master"] = cls.root.nametowidget(path)
- 
+      txt_cfg["yscrollcommand"] = hex_scroll.set
       hex_txt = Text(**txt_cfg)
       hex_txt.grid(**txt_grid_opts)
+      hex_txt.bind()
 
-  # Handler Functions
+  def mk_lbl_frames(cls, lbl_frame_cfgs):
+    lbl_iter = iter(lbl_frame_cfgs)
+    for dict in range(len(lbl_frame_cfgs) // 2):
+      lbl_cfg = next(lbl_iter)
+      lbl_grid_opts = next(lbl_iter)
 
-  # change cursor when button clicked
+      gui.set_parent(cls.root, lbl_cfg)
+
+      lbl = LabelFrame(**lbl_cfg)
+      lbl.grid_propagate(0)
+      lbl.grid(**lbl_grid_opts)
+
+
+  def mk_lbls(cls, lbl_cfgs):
+    lbl_iter = iter(lbl_cfgs)
+    for dict in range(len(lbl_cfgs) // 2):
+      lbl_cfg = next(lbl_iter)
+      lbl_grid_opts = next(lbl_iter)
+
+      gui.set_parent(cls.root, lbl_cfg)
+
+      lbl = Label(**lbl_cfg)
+
+      lbl.grid(**lbl_grid_opts)
+
+  def scroll_hex_txt(cls, *args):
+    hex_scroll = cls.root.nametowidget('.nge.hex_frame.hex_scrollbar')
+    hex_scroll.set(*args)
+
   def tool_btn_callback(cls, event):
-    old_btn = None
-    if cls.program.active_tool is not None:
-      old_btn = cls.root.nametowidget('.draw_frame.draw_btn_frame.' + cls.program.active_tool + '_btn')
-      old_btn.configure(style='NGE.tool_btn')
     btn = event.widget
-    btn.configure(style='NGE.sel_tool_btn')
-    tool_str = btn._name[0:-4]
-    draw_canvas = cls.root.nametowidget('draw_frame.draw_canvas')
-    cls.program.active_tool = tool_str
-    GL.chg_cursor(tool_str, draw_canvas)
-    
-    #canvas.configure(cursor=("@./erasercur2.xbm", "erasercur2mask.xbm", "#000000", "#FFFFFF"))
-
-  def color_btn_callback(cls, event):
-    if cls.program.active_color is not None:
-      color_name = cls.program.active_color_name()
-      old_btn = cls.root.nametowidget('.draw_frame.draw_btn_frame.' + color_name + '_btn')
-      old_btn.configure(style='NGE.tool_btn')
-    btn = event.widget
-    btn.configure(style='NGE.sel_tool_btn')
-    color_str = event.widget._name[0:-4]
-    cls.program.active_color = GL.chg_color(color_str)
-
+    tool_name = btn._name[:-4]
+    test = btn.getvar('active_tool')
+    if btn.getvar('active_tool') != tool_name:
+      btn.configure(style='nge.sel_tool_btn')
+      btn.setvar('active_tool', tool_name)
+      
   def draw_canvas_callback(cls, event):
-    tool = cls.program.active_tool
-    color = cls.program.active_color
-    pixels = GL.draw_canvas_tool_click(event, tool, color)
-    sheet_canvas = cls.root.nametowidget(".sheet_frame.sheet_canvas")
-    cls.program.update_char(pixels, sheet_canvas)
+    gui.draw_canvas_tool_click(event)
 
   def sheet_canvas_callback(cls, event):
-    old_active_char = cls.program.active_char
-    new_active_char = (event.x // 40) + (event.y // 40) * 16
-    if old_active_char != new_active_char:
-      cls.program.active_char = new_active_char
-      char_data = cls.program.get_char_data()
-      draw_canvas = cls.root.nametowidget('.draw_frame.draw_canvas')
-      GL.update_draw_canvas(draw_canvas, char_data)
-      GL.select_char(event.widget, old_active_char, new_active_char)
+    char_id = gui.coords_to_index(event.x, event.y, 16)
+    if event.widget.getvar('active_char') != char_id:
+      event.widget.setvar('active_char', char_id)
 
-  def scroll_callback(cls, *args):
-    hex_header_txt = cls.root.nametowidget('.hex_txt_header')
-    hex_data_txt = cls.root.nametowidget('.hex_txt_data')
-    GL.dbl_scroll(hex_header_txt, hex_data_txt, *args)
-
-  def open_callback(cls):
-    file_buff = filedialog.askopenfile(
-      mode='rb',
-      defaultextension=".nge",
-      filetypes=[('NGE File', '*.nge')],
-      title="Open File"
-    )
-    cls.program.open(file_buff)
-
+  def fg_callback(cls, event):
+    canv = event.widget
+    curr_col = canv.getvar('fg_color')
+    fg_canv = canv.nametowidget('.nge.draw_frame.draw_btn_frame.fg_color')
+    col_sq = canv.find_closest(event.x, event.y)
+    new_col = canv.itemcget(col_sq, "fill")
+    if new_col != curr_col:
+      canv.setvar('fg_color', new_col)
+      fg_canv.configure(background=new_col)
   
-  def save_as_callback(cls):
-    file_buff = filedialog.asksaveasfile(
-      mode='rb',
-      defaultextension=".nge",
-      filetypes=[('NGE File', '*.ngge')],
-      title="Save as..."
-    )
-    cls.program.save_as(file_buff)
+  def bg_callback(cls, event):
+    canv = event.widget
+    curr_col = canv.getvar('bg_color')
+    bg_canv = canv.nametowidget('.nge.draw_frame.draw_btn_frame.bg_color')
+    col_sq = canv.find_closest(event.x, event.y)
+    new_col = canv.itemcget(col_sq, "fill")
+    if new_col != curr_col:
+      canv.setvar('bg_color', new_col)
+      bg_canv.configure(background=new_col)
 
-  def file_view_sel_callback(cls, event):
+  def treeview_callback(cls, event):
     treeview = event.widget
-    item_id = treeview.selection()[0]
-    cls.program.chg_sel(item_id)
-    if item_id.find("ch") != -1:
-      sheet_canvas = cls.root.nametowidget('.sheet_frame.sheet_canvas')
-      ch_id = int(item_id[9:])
-      GL.select_char(sheet_canvas, cls.program.active_char, ch_id)
-      char_data = cls.program.get_char_data()
-      draw_canvas = cls.root.nametowidget('.draw_frame.draw_canvas')
-      GL.update_draw_canvas(draw_canvas, char_data)
-
+    id = treeview.focus()
+    act_sheet = treeview.getvar('active_sheet')
+    act_char = treeview.getvar('active_char')
+    id_elements = id.split('.')
+    if 'sh' in id:
+      sheet_num = int(id_elements[1][2:])
+      if sheet_num != treeview.getvar('active_sheet'):
+        treeview.setvar('active_sheet', sheet_num)
     
-  def add_sh_callback(cls):
-    GL.add_sheet_dialog()
+    if 'ch' in id:
+      char_num = int(id_elements[2][2:])
+      if sheet_num != treeview.getvar('active_char'):
+        treeview.setvar('active_char', char_num)    
+    
+  def add_sh(cls):
+    AddSheetDialog(cls.root.librarian)
+
+  def rem_sh(cls):
+    RemSheetDialog(cls.root.librarian)
+
+  def add_ch(cls):
+    AddCharDialog(cls.root.librarian)
+
+  def rem_ch(cls):
+    RemCharDialog(cls.root.librarian)

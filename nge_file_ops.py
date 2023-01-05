@@ -1,7 +1,5 @@
 from nge_classes import Book
-from random import randint, choice
-from string import ascii_letters
-from pathlib import Path
+
 ### Encoding for bytes conversions
 utf8='utf-8'
 
