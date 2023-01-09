@@ -1,5 +1,5 @@
-from tkinter import VERTICAL, W
-import nge_gui_logic as gui
+from tkinter import VERTICAL
+draw_canv_cfgs = []
 frame_cfgs = [
   {
     "master" : ".nge",
@@ -111,9 +111,9 @@ canvas_cfgs = [
   {
     "master" : ".nge.draw_frame",
     "name" : "draw_canvas",
-    "background" : "#ffffff",
-    "width" : 393,
-    "height" : 393 
+    "background" : "#000000",
+    "width" : 395,
+    "height" : 395 
   },
   {
     "column": 1,
@@ -125,10 +125,12 @@ canvas_cfgs = [
   {
     "master" : ".nge.sheet_frame",
     "name" : "sheet_canvas",
-    "background" : "#ffffff",
+    "background" : "#000000",
     "cursor" : "cross",
-    "width" : 786,
-    "height" : 393
+    "width" : 787,
+    "height" : 395,
+    "selectborderwidth" : 3,
+    "selectforeground" : '#ff0000' 
   },
   {
     "column" : 0,
@@ -444,11 +446,11 @@ lbl_frame_cfgs = [
   }
 ]
 
-lbl_cfgs = [
+lbl_txt_cfgs = [
   {
     "master" : ".nge.info_frame.book_label_frame",
-    "name" : "book_name",
-    "text" : "Book Name:"
+    "name" : "book_name_txt",
+    "text" : 'Book Name: '
   },
   {
     "sticky" : "W",
@@ -457,8 +459,8 @@ lbl_cfgs = [
   },
   {
     "master" : ".nge.info_frame.book_label_frame",
-    "name" : "num_sheets",
-    "text" : "Number of Sheets:"
+    "name" : "num_sheets_txt",
+    "text" : "Number of Sheets: "
   },
   {
     "sticky" : "W",
@@ -467,8 +469,8 @@ lbl_cfgs = [
   },
   {
     "master" : ".nge.info_frame.sheet_label_frame",
-    "name" : "sheet_name",
-    "text" : "Sheet Name:"
+    "name" : "sheet_name_txt",
+    "text" : "Sheet Name: "
   },
   {
     "sticky" : "W",
@@ -477,8 +479,8 @@ lbl_cfgs = [
   },
   {
     "master" : ".nge.info_frame.sheet_label_frame",
-    "name" : "sheet_id",
-    "text" : "Sheet ID:"
+    "name" : "sheet_id_txt",
+    "text" : "Sheet ID: "
   },
   {
     "sticky" : "W",
@@ -487,8 +489,8 @@ lbl_cfgs = [
   },
   {
     "master" : ".nge.info_frame.sheet_label_frame",
-    "name" : "num_chars",
-    "text" : "Number of Characters:"
+    "name" : "num_chars_txt",
+    "text" :  "Number of Characters: "
   },
   {
     "sticky" : "W",
@@ -497,8 +499,8 @@ lbl_cfgs = [
   },
   {
     "master" : ".nge.info_frame.char_label_frame",
-    "name" : "char_name",
-    "text" : "Character Name:"
+    "name" : "char_name_txt",
+    "text" :  'Character Name: '
   },
   {
     "sticky" : "W",
@@ -507,12 +509,85 @@ lbl_cfgs = [
   },
   {
     "master" : ".nge.info_frame.char_label_frame",
-    "name" : "char_id",
-    "text" : "Character ID:"
+    "name" : "char_id_txt",
+    "text" : 'Character ID: '
   },
   {
     "sticky" : "W",
     "column" : 0,
     "row" : 1
+  }
+]
+
+lbl_var_cfgs = [
+  {
+    "master" : ".nge.info_frame.book_label_frame",
+    "name" : "book_name",
+    "textvariable" : 'book_name_var'
   },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 0
+  },
+  {
+    "master" : ".nge.info_frame.book_label_frame",
+    "name" : "num_sheets",
+    "textvariable" : 'sheet_num_var'
+  },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 1
+  },
+  {
+    "master" : ".nge.info_frame.sheet_label_frame",
+    "name" : "sheet_name",
+    "textvariable" : 'sheet_name_var'
+  },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 0
+  },
+  {
+    "master" : ".nge.info_frame.sheet_label_frame",
+    "name" : "sheet_id",
+    "textvariable" : 'sheet_id_var'
+  },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 1
+  },
+  {
+    "master" : ".nge.info_frame.sheet_label_frame",
+    "name" : "num_chars",
+    "textvariable" :  'num_char_var'
+  },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 2
+  },
+  {
+    "master" : ".nge.info_frame.char_label_frame",
+    "name" : "char_name",
+    "textvariable" : 'char_name_var'
+  },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 0
+  },
+  {
+    "master" : ".nge.info_frame.char_label_frame",
+    "name" : "char_id",
+    "textvariable" : 'char_id_var'
+  },
+  {
+    "sticky" : "W",
+    "column" : 1,
+    "row" : 1
+  }
 ]

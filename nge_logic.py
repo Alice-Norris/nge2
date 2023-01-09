@@ -1,7 +1,6 @@
-from nge_classes import Book, Sheet
+from nge_classes import Book
 from nge_librarian import Librarian
-from tkinter import Toplevel, PhotoImage, BitmapImage, Canvas, NW, StringVar
-from tkinter.ttk import Frame
+from tkinter import Toplevel, PhotoImage, BitmapImage, Canvas, NW
 from random import randint
 
 NGE_BLK = 3

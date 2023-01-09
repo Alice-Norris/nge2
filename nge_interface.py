@@ -1,6 +1,5 @@
 from tkinter.ttk import Frame, Button, Treeview, Scrollbar, LabelFrame, Label
 from nge_classes import AddSheetDialog, RemSheetDialog, AddCharDialog, RemCharDialog
-from math import floor, ceil
 from tkinter import Canvas, Text, Menu, FALSE
 import nge_widget_configs as cfgs
 import nge_gui_logic as gui
@@ -14,17 +13,14 @@ class userInterface:
 
   def __init__ (cls, root, char_data_list):#, images: dict):
     cls.root = root
-    #cls.root.title("Nintendo Graphics Editor")
     cls.char_data_list = char_data_list
     cls.create_widgets()
     cls.setup_widgets()
-    cls.root.setvar('active_char', 0)
-    cls.root.setvar('active_sheet', 0)
-    cls.root.setvar('fg_color', '#ffffff')
-    cls.root.setvar('bg_color', '#000000')
+    cls.root.setvar('fg_color', '#000000')
+    cls.root.setvar('bg_color', '#ffffff')
 
   def create_widgets(cls):
-    cls.mk_menus()
+    cls.mk_menu()
     cls.mk_frames(cfgs.frame_cfgs)
     cls.mk_subframes(cfgs.subframe_cfgs)
     cls.mk_canvases(cfgs.canvas_cfgs)
@@ -34,7 +30,7 @@ class userInterface:
     cls.mk_tool_btns(cfgs.tool_btn_cfgs)
     cls.mk_treeview_btns(cfgs.treeview_btn_cfgs)
     cls.mk_lbl_frames(cfgs.lbl_frame_cfgs)
-    cls.mk_lbls(cfgs.lbl_cfgs)
+    cls.mk_lbls(cfgs.lbl_txt_cfgs, cfgs.lbl_var_cfgs)
 
   def setup_widgets(cls):
     draw_canvas = cls.root.nametowidget('.nge.draw_frame.draw_canvas')
@@ -42,7 +38,7 @@ class userInterface:
     
     sheet_canvas = cls.root.nametowidget('.nge.sheet_frame.sheet_canvas')
     gui.sheet_grid_setup(sheet_canvas)
-
+    
     hex_txt = cls.root.nametowidget('.nge.hex_frame.hex_txt')
     gui.hex_txt_setup(hex_txt)
 
@@ -53,9 +49,7 @@ class userInterface:
     treeview_scroll = cls.root.nametowidget('.nge.tree_frame.tree_scrollbar')
     gui.treeview_setup(treeview, treeview_scroll)
 
-
-
-  def mk_menus(cls):
+  def mk_menu(cls):
     window = cls.root.winfo_toplevel()
     menu = Menu()
     window.option_add('*tearOff', FALSE)
@@ -109,8 +103,6 @@ class userInterface:
       if canvas_cfg["name"] == "draw_canvas":
         canvas.bind('<ButtonRelease-1>', cls.draw_canvas_callback)
         canvas.bind('<ButtonRelease-3>', cls.draw_canvas_callback)
-      elif canvas_cfg["name"] == "sheet_canvas":
-        canvas.bind('<ButtonRelease-1>', cls.sheet_canvas_callback)
       elif canvas_cfg["name"] == "col_palette":
         canvas.bind('<ButtonRelease-1>', cls.fg_callback)
         canvas.bind('<ButtonRelease-3>', cls.bg_callback)
@@ -128,9 +120,6 @@ class userInterface:
       view.column("#0")
       view.grid(**treeview_grid_opts)
 
-      view.bind('<ButtonRelease-1>', cls.treeview_callback)
-
-  
   def mk_treeview_btns(cls, treeview_btn_cfgs):
     btn_iter = iter(treeview_btn_cfgs)
 
@@ -207,17 +196,20 @@ class userInterface:
       lbl.grid(**lbl_grid_opts)
 
 
-  def mk_lbls(cls, lbl_cfgs):
-    lbl_iter = iter(lbl_cfgs)
-    for dict in range(len(lbl_cfgs) // 2):
-      lbl_cfg = next(lbl_iter)
-      lbl_grid_opts = next(lbl_iter)
+  def mk_lbls(cls, lbl_txt_cfgs, lbl_var_cfgs):
+    cfg_lists = [lbl_txt_cfgs, lbl_var_cfgs]
+    for cfg_list in cfg_lists:
+      lbl_iter = iter(cfg_list)
+      for dict in range(len(cfg_list) // 2):
+        lbl_cfg = next(lbl_iter)
+        lbl_grid_opts = next(lbl_iter)
 
-      gui.set_parent(cls.root, lbl_cfg)
+        gui.set_parent(cls.root, lbl_cfg)
 
-      lbl = Label(**lbl_cfg)
+        lbl = Label(**lbl_cfg)
 
-      lbl.grid(**lbl_grid_opts)
+        lbl.grid(**lbl_grid_opts)
+
 
   def scroll_hex_txt(cls, *args):
     hex_scroll = cls.root.nametowidget('.nge.hex_frame.hex_scrollbar')
@@ -225,19 +217,19 @@ class userInterface:
 
   def tool_btn_callback(cls, event):
     btn = event.widget
-    tool_name = btn._name[:-4]
-    test = btn.getvar('active_tool')
-    if btn.getvar('active_tool') != tool_name:
+    new_tool = btn._name[:-4]
+    curr_tool = btn.getvar('active_tool')
+    if curr_tool != '':
+      old_btn = btn.nametowidget('.nge.draw_frame.draw_btn_frame.'+curr_tool+'_btn')
+      old_btn.configure(style='nge.tool_btn')
+    if new_tool != curr_tool:  
       btn.configure(style='nge.sel_tool_btn')
-      btn.setvar('active_tool', tool_name)
-      
+      btn.setvar('active_tool', new_tool)
+      gui.chg_cursor(btn.nametowidget('.nge.draw_frame.draw_canvas'), new_tool)
+  
   def draw_canvas_callback(cls, event):
     gui.draw_canvas_tool_click(event)
-
-  def sheet_canvas_callback(cls, event):
-    char_id = gui.coords_to_index(event.x, event.y, 16)
-    if event.widget.getvar('active_char') != char_id:
-      event.widget.setvar('active_char', char_id)
+    event.widget.event_generate('<<Char-Data-Update>>')
 
   def fg_callback(cls, event):
     canv = event.widget
@@ -259,30 +251,15 @@ class userInterface:
       canv.setvar('bg_color', new_col)
       bg_canv.configure(background=new_col)
 
-  def treeview_callback(cls, event):
-    treeview = event.widget
-    id = treeview.focus()
-    act_sheet = treeview.getvar('active_sheet')
-    act_char = treeview.getvar('active_char')
-    id_elements = id.split('.')
-    if 'sh' in id:
-      sheet_num = int(id_elements[1][2:])
-      if sheet_num != treeview.getvar('active_sheet'):
-        treeview.setvar('active_sheet', sheet_num)
-    
-    if 'ch' in id:
-      char_num = int(id_elements[2][2:])
-      if sheet_num != treeview.getvar('active_char'):
-        treeview.setvar('active_char', char_num)    
-    
   def add_sh(cls):
-    AddSheetDialog(cls.root.librarian)
+    AddSheetDialog(cls.root)
+    print('lmao')
 
   def rem_sh(cls):
-    RemSheetDialog(cls.root.librarian)
+    RemSheetDialog(cls.root)
 
   def add_ch(cls):
-    AddCharDialog(cls.root.librarian)
+    AddCharDialog(cls.root)
 
   def rem_ch(cls):
-    RemCharDialog(cls.root.librarian)
+    RemCharDialog(cls.root)

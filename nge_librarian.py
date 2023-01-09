@@ -64,7 +64,9 @@ class Librarian:
       return cls.__current_book
     
     def add_sheet(cls, sheet_name: str):
-      cls.__current_book.add_sheet(sheet_name)
+      new_sheet = cls.__current_book.add_sheet(sheet_name)
+      return new_sheet
     
-    def add_char(cls, char_name: str):
-      cls.__current_sheet.add_char(char_name)
+    def add_char(cls, char_name: str, id: int=None):
+      new_char = cls.__current_sheet.add_char(char_name, id)
+      return new_char
