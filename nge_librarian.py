@@ -70,3 +70,15 @@ class Librarian:
     def add_char(cls, char_name: str, id: int=None):
       new_char = cls.__current_sheet.add_char(char_name, id)
       return new_char
+    
+    def rem_sheet(cls, sheet_id: int):
+      for index, sheet in enumerate(cls.__current_book.sheets):
+        if sheet.id == sheet_id:
+          cls.__current_book.sheets.pop(index)
+    
+    def rem_char(cls, sh_id: int, ch_id: int):
+      char_list = cls.__current_book.sheet_by_id(sh_id).char_list
+      for index, char in enumerate(char_list):
+        if char.id == ch_id:
+          char_list.pop(index)
+

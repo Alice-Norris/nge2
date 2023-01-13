@@ -1,4 +1,4 @@
-from nge_classes import Book
+from nge_classes import Book, Character
 from nge_librarian import Librarian
 from tkinter import Toplevel, PhotoImage, BitmapImage, Canvas, NW
 from random import randint
@@ -22,6 +22,13 @@ dat_to_col_dict = {
   NGE_WHT : "#ffffff"
 }
 
+def str_to_char(char_str):
+  (char_id, char_name, char_data) = char_str.split('*')
+  char_id = int(char_id)
+  char_data = [int(x) for x in char_data.split(',')]
+  char = Character(char_id, char_name)
+  char.data = char_data
+  return char
 def randomize(book: Book):
   char_list = book.sheets[0].char_list
   for character in char_list:
@@ -66,8 +73,7 @@ def chg_sel(id: str):
     active_sheet = sh_id
 
 # Loads images upon startup.
-def load_imgs(root: Toplevel, book: Book, sheet_num: int):
-  char_list = book.sheets[sheet_num].char_list
+def load_imgs(root: Toplevel):
   images = {}
   img_names = [
     "pencil.xbm",
@@ -97,11 +103,6 @@ def load_imgs(root: Toplevel, book: Book, sheet_num: int):
       images[name] = PhotoImage(master=root, name=name, file=filename)
     elif ext == "png":
       images[name] = PhotoImage(master=root, name=name, file=filename, format="PNG")
-  
-  for x in range(128):
-    img_data = create_img_data([0]*64)
-    img_name = "img" + str(x)
-    images[img_name] = PhotoImage(master=root, name=img_name, data=img_data, format="PPM")
 
   return images
 
