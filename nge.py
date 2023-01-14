@@ -1,8 +1,9 @@
-from tkinter import IntVar, StringVar, BooleanVar, filedialog, FALSE, Menu
+from tkinter import filedialog, Menu
 from tkinter.ttk import Frame, Menubutton
 from nge_librarian import Librarian
 from enum import Enum
 from nge_logic import load_imgs
+from nge_file_ops import write_file, read_file
 import nge_gui_logic as gui
 from nge_draw_frame import DrawFrame
 from nge_sheet_frame import SheetFrame
@@ -49,7 +50,8 @@ class NGE(Frame):
       filetypes=[('NGE File', '*.nge')],
       title="Save as..."
     )
-    cls.librarian.save(file_buff, cls.book)
+    data = write_file(cls.book)
+    file_buff.write(data)
 
   def open_callback(cls):
     file_buff = filedialog.askopenfile(
@@ -58,12 +60,21 @@ class NGE(Frame):
       filetypes=[('NGE File', '*.nge')],
       title="Open File"
     )
-    cls.librarian.load(file_buff)
-    cls.active_book = cls.librarian.borrow()
-    cls.update_txt_vars()
+    cls.book = read_file(file_buff.name)
+    print('lmao')
+    cls.setvar('sheet_id_var', 0)
+    cls.setvar('char_id_var', 0)
+    sh_var = cls.frames["info"].sheet_id_var
+    ch_var = cls.frames["info"].char_id_var
+    cls.frames["draw"] = DrawFrame(cls, sh_var, ch_var)
+    cls.frames["sheet"] = SheetFrame(cls, sh_var, ch_var)
+    cls.frames["tree"] = TreeFrame(cls, sh_var, ch_var)
+    cls.frames["hex"] = HexFrame(cls, sh_var, ch_var)
+    print('lmao')
 
   def exit_nge(cls):
-    pass
+    cls.root.destroy()
+    cls.quit()
 
   def mk_menu(cls):
     menu = Menu(cls)

@@ -1,6 +1,6 @@
 from tkinter.ttk import Scrollbar, Frame, Label
 from tkinter import Text, CENTER
-from nge_widget_configs import hex_frame_cfgs
+from nge_widget_configs import hex_scroll_cfg, hex_txt_cfg
 from nge_classes import Book
 from nge_logic import str_to_char
 
@@ -10,32 +10,14 @@ class HexFrame(Frame):
   curr_sel = 0
   def __init__(cls, parent, sh_var, ch_var):
     Frame.__init__(cls, parent, **{"name" : "hex_frame", "class_" : "Frame", "borderwidth" : 2, "relief" : "groove"})
+    cls.grid(**{"sticky" : "NSEW", "column" : 1, "row" : 2})
     cls.root = cls.winfo_toplevel()
     ch_var.trace_add('write', cls.update_txt_sel)
     sh_var.trace_add('write', cls.refresh_txt)
     cls.book = parent.book
-    cls.grid(**{"sticky" : "NSEW", "column" : 1, "row" : 2})
-    cfg_iter = iter(hex_frame_cfgs.items())
-    while (cfg := next(cfg_iter, None)) is not None:
-      constr = None
-      opts = cfg[1]
-      if cfg[0] == "scrollbar":
-        constr = Scrollbar
-      elif cfg[0] == "text":
-        constr = Text
-      
-      opt_iter = iter(opts)
-      while (opt := next(opt_iter, None)) is not None:
-        opt[0]["master"] = cls
-        widget = constr(**opt[0])
-        if opt[0]["name"] == "hex_scrollbar":
-          cls.hex_scroll = widget
-        if opt[0]["name"] == "hex_txt":
-          cls.hex_txt = widget
-        widget.grid(**opt[1])
+    
+    cls.mk_widgets()
 
-    cls.hex_txt["yscrollcommand"] = cls.hex_scroll.set
-    cls.hex_scroll["command"] = cls.hex_txt.yview
     cls.hex_txt_setup()
     upd_txt_call = cls.register(cls.update_hex_txt)
     cls.tk.call('bind', cls, '<<Char-Data-Mod>>', upd_txt_call)
@@ -43,6 +25,19 @@ class HexFrame(Frame):
     cls.tk.call('bind', cls, '<<Char-Add>>', add_txt_call + ' %s')
     rem_txt_call = cls.register(cls.rem_hex_txt)
     cls.tk.call('bind', cls, '<<Char-Rem>>', rem_txt_call + ' %s')
+
+  def mk_widgets(cls):
+      hex_txt_cfg[0]["master"] = cls
+      hex_scroll_cfg[0]["master"] = cls
+
+      cls.hex_txt = Text(**hex_txt_cfg[0])
+      cls.hex_txt.grid(**hex_txt_cfg[1])
+
+      cls.hex_scroll = Scrollbar(**hex_scroll_cfg[0])
+      cls.hex_scroll.grid(**hex_scroll_cfg[1])
+
+      cls.hex_txt["yscrollcommand"] = cls.hex_scroll.set
+      cls.hex_scroll["command"] = cls.hex_txt.yview
 
   def hex_txt_setup(cls):
     for x in range(128):

@@ -1,38 +1,47 @@
 from tkinter.ttk import Frame, Label, LabelFrame
 from tkinter import StringVar, IntVar
-from nge_widget_configs import info_frame_cfgs
+from nge_widget_configs import info_lbl_frame_cfgs, info_lbl_cfgs
 from nge_classes import Book
 
 class InfoFrame(Frame):
   book = None
   root = None
-  frames = None
+  lbl_frames = {}
+  lbls = {}
+  var_lbls = {}
 
   def __init__(cls, parent):
     Frame.__init__(cls, parent, **{"name" : "info_frame", "class_" : "Frame", "borderwidth" : 2, "relief" : "groove" })
+    cls.grid(**{"sticky" : "NSEW", "column" : 0, "row" : 2})
     cls.root = cls.winfo_toplevel()
     cls.book = parent.book
-    cls.grid(**{"sticky" : "NSEW", "column" : 0, "row" : 2})
-    cfg_iter = iter(info_frame_cfgs.items())
-    while (cfg := next(cfg_iter, None)) is not None:
-      constr = None
-      opts = cfg[1]
-      if cfg[0] == "labelframe":
-        constr = LabelFrame
-      elif cfg[0] == "label":
-        constr = Label
+    cls.mk_widgets()
+    cls.set_vars()
 
-      opt_iter = iter(opts)
-      while (opt := next(opt_iter, None)) is not None:
-        if constr == LabelFrame:
-          opt[0]["master"] = cls
-          widget = constr(**opt[0])
-          widget.grid_propagate(0)
-          widget.grid(**opt[1])
-        else:
-          opt[0]["master"] = cls.nametowidget(opt[1]["in_"])
-          widget = constr(**opt[0])
-          widget.grid(**opt[1])
+  def mk_widgets(cls):
+    for lbl_frame_opts in info_lbl_frame_cfgs:
+      lbl_frame_cfg = lbl_frame_opts[0]
+      lbl_frame_grid = lbl_frame_opts[1]
+      lbl_name = lbl_frame_cfg["name"]
+
+      lbl_frame_cfg["master"] = cls
+      lbl_frame = LabelFrame(**lbl_frame_cfg)
+
+      cls.lbl_frames[lbl_name] = lbl_frame
+      lbl_frame.grid(**lbl_frame_grid)
+    
+    for lbl_opts in info_lbl_cfgs:
+      lbl_cfg = lbl_opts[0]
+      lbl_grid = lbl_opts[1]
+
+      lbl_name = lbl_cfg["name"]
+      parent_path = lbl_grid["in_"]
+      lbl_cfg["master"] = cls.nametowidget(parent_path)
+      lbl = Label(**lbl_cfg)
+      cls.lbls[lbl_name] = lbl
+      lbl.grid(**lbl_grid)
+
+  def set_vars(cls):
     num_sheets = len(cls.book.sheets)
     sheet = cls.book[0]
     num_chars = len(cls.book[0].char_list)

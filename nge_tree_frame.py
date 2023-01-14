@@ -1,43 +1,21 @@
 from tkinter.ttk import Frame, Treeview, Button, Scrollbar
-from nge_widget_configs import tree_frame_cfgs
+from nge_widget_configs import tree_fileview_cfg, tree_btn_cfgs, tree_subframe_cfg, tree_scroll_cfg
 from nge_classes import Book, AddCharDialog, AddSheetDialog, RemCharDialog, RemSheetDialog
 
 class TreeFrame(Frame):
   treeview = None
   tree_scroll = None
+  tree_btns = {}
+  btn_subframe = None
 
   def __init__(cls, parent, sh_var, ch_var):
     Frame.__init__(cls, parent, **{"name" : "tree_frame", "class_" : "Frame", "borderwidth" : 2, "relief" : "groove"})
+    cls.grid(**{ "sticky" : "EW", "column" : 2, "row" : 2 })
     cls.root = cls.winfo_toplevel()
     cls.book = parent.book
     ch_var.trace_add('write', cls.update_tree_sel)
-    cls.grid(**{ "sticky" : "EW", "column" : 2, "row" : 2 })
-    cfg_iter = iter(tree_frame_cfgs.items())
-    while (cfg := next(cfg_iter, None)) is not None:
-      constr = None
-      opts = cfg[1]
-      if cfg[0] == "frame":
-        constr = Frame
-      elif cfg[0] == "treeview":
-        constr = Treeview
-      elif cfg[0] == "btn":
-        constr = Button
-        opts[0][0]["command"] = cls.add_sheet
-        opts[1][0]["command"] = cls.rem_sheet
-        opts[2][0]["command"] = cls.add_char
-        opts[3][0]["command"] = cls.rem_char
-      elif cfg[0] == "scrollbar":
-        constr = Scrollbar
-      
-      opt_iter = iter(opts)
-      while (opt := next(opt_iter, None)) is not None:
-        opt[0]["master"] = cls
-        widget = constr(**opt[0])
-        if opt[0]["name"] == 'file_treeview':
-          cls.treeview = widget
-        if opt[0]["name"] == 'tree_scrollbar':
-          cls.tree_scroll = widget
-        widget.grid(**opt[1])
+    
+    cls.mk_widgets()
     cls.treeview_setup()
     upd_tree_sel = cls.register(cls.update_tree_sel)
     cls.tk.call("bind", cls, "<<Char-Change>>", upd_tree_sel + ' %s')
@@ -46,6 +24,33 @@ class TreeFrame(Frame):
     cls.tk.call("bind", cls, "<<Char-Rem>>", upd_tree)
     cls.tk.call("bind", cls, "<<Sheet-Add>>", upd_tree)
     cls.tk.call("bind", cls, "<<Sheet-Rem>>", upd_tree)
+
+  def mk_widgets(cls):
+    subframe_cfg = tree_subframe_cfg[0]
+    subframe_grid = tree_subframe_cfg[1]
+    subframe_cfg["master"] = cls
+    cls.btn_subframe = Frame(**subframe_cfg)
+    cls.btn_subframe.grid(**subframe_grid)
+
+    treeview_cfg = tree_fileview_cfg[0]
+    treeview_grid = tree_fileview_cfg[1]
+    treeview_cfg["master"] = cls
+    cls.treeview = Treeview(**treeview_cfg)
+    cls.treeview.grid(**treeview_grid)
+
+    scroll_cfg = tree_scroll_cfg[0]
+    scroll_grid = tree_scroll_cfg[1]
+    scroll_cfg["master"] = cls
+    cls.tree_scroll = Scrollbar(**scroll_cfg)
+    cls.tree_scroll.grid(**scroll_grid)
+
+    for btn_opts in tree_btn_cfgs:
+      btn_cfg = btn_opts[0]
+      btn_grid = btn_opts[1]
+
+      btn_cfg["master"] = cls.btn_subframe
+      cls.tree_btns[btn_cfg["name"]] = Button(**btn_cfg)
+      cls.tree_btns[btn_cfg["name"]].grid(**btn_grid)
 
   def char_chg_det(cls, event):
     print('lmao')

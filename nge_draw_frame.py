@@ -2,16 +2,18 @@ from tkinter.ttk import Frame, Button
 from tkinter import Canvas, StringVar, IntVar
 from nge_logic import dat_to_col_dict
 from nge_logic import col_to_dat_dict
-from nge_widget_configs import draw_frame_cfgs
+from nge_widget_configs import draw_subframe_cfg, draw_canvas_cfgs, draw_btn_cfgs
 from nge_classes import Book
 from math import ceil, sqrt
 class DrawFrame(Frame):
+  btn_frame = None
+  canvs = {}
   draw_canv = None
-  fg_canv = None
-  bg_canv = None
   col_pal = None
+  btns = {}
   def __init__(cls, parent, sh_var, ch_var):
     Frame.__init__(cls, parent, **{"name" : "draw_frame", "class_" : "Frame", "height" : 400, "width"  : 440, "borderwidth" : 2, "relief" : "groove"})
+    cls.grid(**{ "sticky" : "NESW", "column" : 0, "row" : 1 })
     cls.root = cls.winfo_toplevel()
     cls.book = parent.book
     ch_var.trace_add('write', cls.update_draw_canvas)
@@ -20,36 +22,37 @@ class DrawFrame(Frame):
     cls.active_tool = StringVar(master=cls.root, name = "active_tool", value=None)
     cls.fg_col = StringVar(master=cls.root, name="fg_col", value='#000000')
     cls.bg_col = StringVar(master=cls.root, name="bg_col", value='#ffffff')
-    cls.grid(**{ "sticky" : "NESW", "column" : 0, "row" : 1 })
-    cfg_iter = iter(draw_frame_cfgs.items())
-    while (cfg := next(cfg_iter, None)) is not None:
-      constr = None
-      opts = cfg[1]
-      if cfg[0] == "frame":
-        constr = Frame
-      elif cfg[0] == "canvas":
-        constr = Canvas
-      elif cfg[0] == "btn":
-        constr = Button
-      
-      opt_iter = iter(opts)
-      while (opt := next(opt_iter, None)) is not None:
-        opt[0]["master"] = cls
-        widget = constr(**opt[0])
-        if opt[0]["name"] == 'draw_canvas':
-          cls.draw_canv = widget
-        if opt[0]["name"] == 'fg_color':
-          cls.fg_canv = widget
-        if opt[0]["name"] == 'bg_color':
-          cls.bg_canv = widget
-        if opt[0]["name"] == 'col_palette':
-          cls.col_pal = widget
-
-        widget.grid(**opt[1])
     
+    cls.mk_widgets()
     cls.draw_grid_setup()
     cls.col_palette_setup()
     cls.bind_class('tool_btn', '<ButtonRelease-1>', cls.chg_tool)
+
+  def mk_widgets(cls):
+    draw_subframe_cfg[0]["master"] = cls
+    cls.btn_frame = Frame(**draw_subframe_cfg[0])
+    cls.btn_frame.grid(**draw_subframe_cfg[1])
+    
+    for canvas_opts in draw_canvas_cfgs:
+      canv_cfg = canvas_opts[0]
+      canv_grid = canvas_opts[1]
+      
+      canv_cfg["master"] = cls
+      canvas = Canvas(**canv_cfg)
+      cls.canvs[canv_cfg["name"]] = canvas
+      canvas.grid(**canv_grid)
+
+    for btn_opts in draw_btn_cfgs:
+      btn_cfg = btn_opts[0]
+      btn_grid = btn_opts[1]
+
+      btn = Button(**btn_cfg)
+      btn_cfg["master"] = cls.btn_frame
+      cls.btns[btn_cfg["name"]] = btn
+      btn.grid(**btn_grid)
+    
+    cls.draw_canv = cls.canvs["draw_canvas"]
+    cls.col_pal = cls.canvs["col_palette"]
 
   def draw_grid_setup(cls):
     for y in range(8):

@@ -1,7 +1,7 @@
 from tkinter.ttk import Frame, Button
 from tkinter import Canvas, NW, PhotoImage
 from nge_logic import dat_to_col_dict, create_img_data
-from nge_widget_configs import sheet_frame_cfgs
+from nge_widget_configs import sheet_canvas_cfg
 from nge_classes import AddCharDialog, Book
 
 class SheetFrame(Frame):
@@ -11,30 +11,12 @@ class SheetFrame(Frame):
 
   def __init__(cls, parent, sh_var, ch_var):
     Frame.__init__(cls, parent, **{ "name" : "sheet_frame", "class_" : "Frame", "height" : 400, "width"  : 792, "borderwidth" : 2, "relief" : "groove"})
+    cls.grid(**{ "sticky" : "NESW", "columnspan" : 2, "column" : 1, "row" : 1 })
     cls.root = cls.winfo_toplevel()
     cls.book = parent.book
     ch_var.trace_add('write', cls.update_sheet_sel)
     sh_var.trace_add('write', cls.update_sheet)
-    cls.grid(**{ "sticky" : "NESW", "columnspan" : 2, "column" : 1, "row" : 1 })
-    cfg_iter = iter(sheet_frame_cfgs.items())
-    while (cfg := next(cfg_iter, None)) is not None:
-      constr = None
-      opts = cfg[1]
-      if cfg[0] == "frame":
-        constr = Frame
-      elif cfg[0] == "canvas":
-        constr = Canvas
-      elif cfg[0] == "btn":
-        constr = Button
-      
-      opt_iter = iter(opts)
-      while (opt := next(opt_iter, None)) is not None:
-        opt[0]["master"] = cls
-        widget = constr(**opt[0])
-        if opt[0]["name"] == 'sheet_canvas':
-          cls.sheet_canv = widget
-
-        widget.grid(**opt[1])
+    cls.mk_widgets()
     cls.sheet_grid_setup()
     char_mod_call = cls.register(cls.update_char_img)
     cls.tk.call('bind', cls, '<<Char-Data-Mod>>', char_mod_call)
@@ -43,6 +25,14 @@ class SheetFrame(Frame):
     cls.tk.call('bind', cls, '<<Char-Rem>>', mod_ch_call + ' %s %d')
     upd_sel_call = cls.register(cls.update_sheet_sel)
     cls.tk.call('bind', cls, '<<Char-Change>>', upd_sel_call)
+  
+  def mk_widgets(cls):
+    sheet_cfg = sheet_canvas_cfg[0]
+    sheet_grid = sheet_canvas_cfg[1]
+
+    sheet_cfg["master"] = cls
+    cls.sheet_canv = Canvas(**sheet_cfg)
+    cls.sheet_canv.grid(**sheet_grid)
     
   def create_sheet_imgs(cls):
     for char in cls.book[0].char_list:

@@ -1,21 +1,20 @@
 from nge_classes import Book
-
+from pathlib import Path
 ### Encoding for bytes conversions
 utf8='utf-8'
 
 ### Read file
 # def read_file(filepath: Path, filename: str):
-def read_file(file_buffer):
-  # Path to file
-  # path = Path(filepath + filename + '.nge')
+def read_file(filename: str):
+  path = Path(filename)
 
   # Checking if file exists
-  # if not path.exists:
-  #   print("invalid file!")
-  #   raise(FileNotFoundError)
+  if not path.exists:
+    print("invalid file!")
+    raise(FileNotFoundError)
   
-  #Open file in read binary mode
-  # with open(path, mode='rb') as file:
+  # Open file in read binary mode
+  with open(path, mode='rb') as file_buffer:
 
     # Find file type, for future modesetting
     file_type = int.from_bytes(file_buffer.read(1), "big")
@@ -25,7 +24,7 @@ def read_file(file_buffer):
 
     # Creating new book
     book = Book(book_name)
-    
+
     # Reading number of sheets from files
     num_sheets = int.from_bytes(file_buffer.read(1), "big")
 
@@ -46,12 +45,15 @@ def read_file(file_buffer):
     # For each sheet name, add sheet to book with that name
     for name in sheet_names:
       book.add_sheet(name)
-
+      book[-1].char_list.pop()
+      
     # For each sheet in the book...
     for sheet in book.sheets:
       # Read number of characters in sheet from file
       num_chars = int.from_bytes(file_buffer.read(1), "big")
 
+      for x in range(num_chars):
+        sheet.add_char()
       # Lists store char names(strings) and data (lists)
       char_name_list = []
       char_data_list = []
@@ -126,7 +128,7 @@ def read_file(file_buffer):
 
 ### Write File
 # def write_file(filepath: Path, filename: str, book: Book=None):
-def write_file(file_buffer,  book: Book=None):
+def write_file(book: Book=None):
   # Holds a concatenated list of sheet names.
   sheet_name_bytes = b''
   # Holds file data
@@ -143,23 +145,7 @@ def write_file(file_buffer,  book: Book=None):
 
     # add to sheet name list!
     sheet_name_bytes += name_bytes
-    
-    ### Removing all-zero characters from end of list
-    ### (All-zero characters between others are saved)
-
-    # Up to 128 times...
-    for x in range(128):
-      # Working from end of list...
-      char = sheet.char_list[127-x]
-
-      # If all entries are zero...
-      if char.data.count(0) == 64:
-        # ...remove from list
-        sheet.char_list.pop(127-x)
-      else:
-        # ...or quit at the first non-zero character!
-        break
-    
+        
     ### Cycling through sheets, creating sheet header and
     ### sheet data.
     # Number of objects in bytes, used in sheet header
@@ -221,7 +207,7 @@ def write_file(file_buffer,  book: Book=None):
   ### Writing to file
   # with open( book.name + '.nge', mode='wb') as file:
   #   file.write(file_data)
-  file_buffer.write(file_data)
+  return file_data
 # active_book = Book("Test")
 
 # def gen_string():
