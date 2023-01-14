@@ -31,7 +31,10 @@ class Sheet:
 
   def __getitem__(cls, key):
     if isinstance(key, int):
-      return cls.char_list[key]
+      if key >= len(cls.char_list):
+        return None
+      else:
+        return cls.char_list[key]
 
   def add_char(cls, name:str="unnamed", id:int=None):
     if id == None:
@@ -60,7 +63,10 @@ class Book:
   
   def __getitem__(cls, key):
     if isinstance(key, int):
-      return cls.sheets[key]
+      if key >= len(cls.sheets):
+        return None
+      else:
+        return cls.sheets[key]
 
   def add_sheet(cls, name:str="unnamed"):
     id = len(cls.sheets)

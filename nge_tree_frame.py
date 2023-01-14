@@ -5,15 +5,14 @@ from nge_classes import Book, AddCharDialog, AddSheetDialog, RemCharDialog, RemS
 class TreeFrame(Frame):
   treeview = None
   tree_scroll = None
-  tree_btns = {}
+  btns = {}
   btn_subframe = None
 
-  def __init__(cls, parent, sh_var, ch_var):
+  def __init__(cls, parent):
     Frame.__init__(cls, parent, **{"name" : "tree_frame", "class_" : "Frame", "borderwidth" : 2, "relief" : "groove"})
     cls.grid(**{ "sticky" : "EW", "column" : 2, "row" : 2 })
     cls.root = cls.winfo_toplevel()
     cls.book = parent.book
-    ch_var.trace_add('write', cls.update_tree_sel)
     
     cls.mk_widgets()
     cls.treeview_setup()
@@ -48,9 +47,16 @@ class TreeFrame(Frame):
       btn_cfg = btn_opts[0]
       btn_grid = btn_opts[1]
 
+      
       btn_cfg["master"] = cls.btn_subframe
-      cls.tree_btns[btn_cfg["name"]] = Button(**btn_cfg)
-      cls.tree_btns[btn_cfg["name"]].grid(**btn_grid)
+      btn = Button(**btn_cfg)
+      cls.btns[btn_cfg["name"]] = btn
+      btn.grid(**btn_grid)
+
+    cls.btns["add_sh"]["command"] = cls.add_sheet
+    cls.btns["rem_sh"]["command"] = cls.rem_sheet
+    cls.btns["add_ch"]["command"] = cls.add_char
+    cls.btns["rem_ch"]["command"] = cls.rem_char
 
   def char_chg_det(cls, event):
     print('lmao')
@@ -62,7 +68,7 @@ class TreeFrame(Frame):
     ch_icon = window.images["character"]
     cls.treeview["yscrollcommand"] = cls.tree_scroll.set
     cls.tree_scroll["command"] = cls.treeview.yview
-    cls.treeview.insert(parent="", iid='book', index="end", open=True, image=bk_icon, text=cls.book.name)
+    cls.treeview.insert(parent="", iid='book', index="end", open=True, image=bk_icon, text=cls.book.name, tag='book')
     for sheet in cls.book.sheets:
       sheet_tag = 'sh' + str(sheet.id)
       cls.treeview.insert(parent='book', iid=sheet_tag, index="end", image=sh_icon, tag=sheet_tag, text=sheet.name)

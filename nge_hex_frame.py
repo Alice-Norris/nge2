@@ -8,12 +8,10 @@ class HexFrame(Frame):
   hex_scroll = None
   hex_txt = None
   curr_sel = 0
-  def __init__(cls, parent, sh_var, ch_var):
+  def __init__(cls, parent):
     Frame.__init__(cls, parent, **{"name" : "hex_frame", "class_" : "Frame", "borderwidth" : 2, "relief" : "groove"})
     cls.grid(**{"sticky" : "NSEW", "column" : 1, "row" : 2})
     cls.root = cls.winfo_toplevel()
-    ch_var.trace_add('write', cls.update_txt_sel)
-    sh_var.trace_add('write', cls.refresh_txt)
     cls.book = parent.book
     
     cls.mk_widgets()
@@ -103,12 +101,14 @@ class HexFrame(Frame):
 
   def refresh_txt(cls, *args):
     sh_num = cls.getvar('sheet_id_var')
-    for line_num in range(126):
+    sheet = cls.book[sh_num]
+    for line_num in range(127):
       start_ind = str(line_num+1) + '.1'
       end_ind = str(line_num+1) + '.54'
       cls.hex_txt.delete(start_ind, end_ind)
-      char = cls.book[sh_num].char_by_id(line_num)
-      if char is not None:
-        dat_txt = cls.char_to_hex(char.data)
-        txt_tag = 'char' + str(line_num)
-        cls.hex_txt.insert(start_ind, dat_txt, txt_tag)
+      if sheet is not None:
+        char = sheet.char_by_id(line_num)
+        if char is not None:
+          dat_txt = cls.char_to_hex(char.data)
+          txt_tag = 'char' + str(line_num)
+          cls.hex_txt.insert(start_ind, dat_txt, txt_tag)

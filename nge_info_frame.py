@@ -49,18 +49,19 @@ class InfoFrame(Frame):
     cls.book_name_var = StringVar(master=cls, name='book_name_var', value=cls.book.name)
     cls.sheet_num_var = IntVar(master=cls, name='sheet_num_var', value=len(cls.book.sheets))
     cls.sheet_name_var = StringVar(master=cls, name='sheet_name_var', value=cls.book[0].name)
-    cls.sheet_id_var = IntVar(master=cls, name='sheet_id_var', value=cls.book[0][0].id)
+    cls.sheet_id_var = IntVar(master=cls, name='sheet_id_var', value=cls.book[0].id)
     cls.sheet_id_var.trace_add('write', cls.update_sheet_vars)
     cls.char_num_var = IntVar(master=cls, name='char_num_var', value=len(cls.book[0].char_list))
-    cls.char_name_var = StringVar(master=cls, name='char_name_var', value=cls.book[0][0].name)
-    cls.char_id_var = IntVar(master=cls, name='char_id_var', value=cls.book[0][0].id)
+    cls.char_name_var = StringVar(master=cls, name='char_name_var', value=cls.book[0].char_by_id(0).name)
+    cls.char_id_var = IntVar(master=cls, name='char_id_var', value=cls.book[0].char_by_id(0).id)
 
   def update_sheet_vars(cls, *args):
     sh_id = cls.sheet_id_var.get()
-    cls.sheet_num_var.set(len(cls.book.sheets))
-    sheet = cls.book.sheet_by_id(sh_id)
-    cls.sheet_name_var.set(sheet.name)
-    cls.char_num_var.set(len(sheet.char_list))
+    if cls.book[sh_id] is not None:
+      cls.sheet_num_var.set(len(cls.book.sheets))
+      sheet = cls.book.sheet_by_id(sh_id)
+      cls.sheet_name_var.set(sheet.name)
+      cls.char_num_var.set(len(sheet.char_list))
   
   def update_char_vars(cls, *args):
     sh_id = cls.sheet_id_var.get()

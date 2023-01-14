@@ -3,20 +3,18 @@ from tkinter import Canvas, StringVar, IntVar
 from nge_logic import dat_to_col_dict
 from nge_logic import col_to_dat_dict
 from nge_widget_configs import draw_subframe_cfg, draw_canvas_cfgs, draw_btn_cfgs
-from nge_classes import Book
-from math import ceil, sqrt
+from math import sqrt
 class DrawFrame(Frame):
   btn_frame = None
   canvs = {}
   draw_canv = None
   col_pal = None
   btns = {}
-  def __init__(cls, parent, sh_var, ch_var):
+  def __init__(cls, parent):
     Frame.__init__(cls, parent, **{"name" : "draw_frame", "class_" : "Frame", "height" : 400, "width"  : 440, "borderwidth" : 2, "relief" : "groove"})
     cls.grid(**{ "sticky" : "NESW", "column" : 0, "row" : 1 })
     cls.root = cls.winfo_toplevel()
     cls.book = parent.book
-    ch_var.trace_add('write', cls.update_draw_canvas)
     cls.start_x = IntVar(master = cls, name = 'start_x', value = None)
     cls.start_y = IntVar(master = cls, name = 'start_y', value = None)
     cls.active_tool = StringVar(master=cls.root, name = "active_tool", value=None)
@@ -26,7 +24,7 @@ class DrawFrame(Frame):
     cls.mk_widgets()
     cls.draw_grid_setup()
     cls.col_palette_setup()
-    cls.bind_class('tool_btn', '<ButtonRelease-1>', cls.chg_tool)
+    
 
   def mk_widgets(cls):
     draw_subframe_cfg[0]["master"] = cls
@@ -46,14 +44,15 @@ class DrawFrame(Frame):
       btn_cfg = btn_opts[0]
       btn_grid = btn_opts[1]
 
-      btn = Button(**btn_cfg)
       btn_cfg["master"] = cls.btn_frame
+      btn = Button(**btn_cfg)
       cls.btns[btn_cfg["name"]] = btn
       btn.grid(**btn_grid)
     
     cls.draw_canv = cls.canvs["draw_canvas"]
     cls.col_pal = cls.canvs["col_palette"]
-
+    cls.bind_class('tool_btn', '<ButtonRelease-1>', cls.chg_tool)
+ 
   def draw_grid_setup(cls):
     for y in range(8):
       for x in range(8):
@@ -83,32 +82,31 @@ class DrawFrame(Frame):
     old_tool_str = cls.active_tool.get()
     new_tool_str = event.widget._name[:-4]
     if old_tool_str != '':
-      old_btn = cls.nametowidget('.nge.draw_frame.' + old_tool_str + '_btn')
+      old_btn = cls.btns[old_tool_str + '_btn']
       old_btn.configure(style='nge.tool_btn')
     if old_tool_str != new_tool_str:
       cls.active_tool.set(new_tool_str)
-      new_btn = cls.nametowidget('.nge.draw_frame.' + new_tool_str + '_btn')
+      new_btn = cls.btns[new_tool_str + '_btn']
       new_btn.configure(style='nge.sel_tool_btn')
       src_img = "@./" + new_tool_str + "_cur.xbm"
       mask_img = new_tool_str + "_cur-mask.xbm"
       cls.draw_canv.configure(cursor=(src_img, mask_img, '#44ccaa', '#44ccaa'))
 
   def chg_col(cls, event):
-    col_palette = event.widget
-    col = col_palette.itemcget('current', 'fill')
+    col = cls.col_pal.itemcget('current', 'fill')
     col_canv = None
     
     if event.num == 1 and cls.getvar('fg_col') != col:
       cls.setvar('fg_col', col)
-      col_canv = cls.fg_canv
+      col_canv = cls.canvs["fg_color"]
     elif event.num == 3 and cls.getvar('bg_col') != col:
       cls.setvar('bg_col', col)
-      col_canv = cls.bg_canv
+      col_canv = cls.canvs["bg_color"]
     
     if col_canv != None:
       col_canv.configure(background=col)
 
-  def update_draw_canvas(cls, *args):
+  def update_draw_canvas(cls):
     sh_id = cls.getvar('sheet_id_var')
     ch_id = cls.getvar('char_id_var')
     char_data = cls.book[sh_id].char_by_id(ch_id).data

@@ -5,27 +5,45 @@ from nge_widget_configs import sheet_canvas_cfg
 from nge_classes import AddCharDialog, Book
 
 class SheetFrame(Frame):
+  # Reference to sheet canvas
   sheet_canv = None
+  # Class variable to track current selection,
+  # So update_sheet_sel can get the previously
+  # selection's coords
   curr_sel = None
+
+  # Dictionary of images for the sheet canvas
   images = {}
 
-  def __init__(cls, parent, sh_var, ch_var):
+  def __init__(cls, parent):
+    # Creating and gridding the frame itself
     Frame.__init__(cls, parent, **{ "name" : "sheet_frame", "class_" : "Frame", "height" : 400, "width"  : 792, "borderwidth" : 2, "relief" : "groove"})
     cls.grid(**{ "sticky" : "NESW", "columnspan" : 2, "column" : 1, "row" : 1 })
+    
+    # Reference to the window itself
     cls.root = cls.winfo_toplevel()
+
+    # Reference to program's book, where data is kept
     cls.book = parent.book
-    ch_var.trace_add('write', cls.update_sheet_sel)
-    sh_var.trace_add('write', cls.update_sheet)
+
+    # Creating widgets for sheet frame
     cls.mk_widgets()
+
+    # Setting up images and grid
     cls.sheet_grid_setup()
-    char_mod_call = cls.register(cls.update_char_img)
-    cls.tk.call('bind', cls, '<<Char-Data-Mod>>', char_mod_call)
+
+    # Binding functions to appropriate events
+    cls.bind('<<Char-Data-Mod>>', cls.update_char_img)
+    cls.bind('<<Char-Change>>', cls.update_sheet_sel)
     mod_ch_call = cls.register(cls.mod_char)
+
+    # %s represents the character that is being modified
+    # %d is the action taken. 'rem' for removal, 'add' 
+    # for adding a new character.
     cls.tk.call('bind', cls, '<<Char-Add>>', mod_ch_call + ' %s %d')
     cls.tk.call('bind', cls, '<<Char-Rem>>', mod_ch_call + ' %s %d')
-    upd_sel_call = cls.register(cls.update_sheet_sel)
-    cls.tk.call('bind', cls, '<<Char-Change>>', upd_sel_call)
   
+  # Making widgets, only one on this frame though
   def mk_widgets(cls):
     sheet_cfg = sheet_canvas_cfg[0]
     sheet_grid = sheet_canvas_cfg[1]
@@ -33,9 +51,12 @@ class SheetFrame(Frame):
     sheet_cfg["master"] = cls
     cls.sheet_canv = Canvas(**sheet_cfg)
     cls.sheet_canv.grid(**sheet_grid)
-    
+  
+  #creates images for sheet.
   def create_sheet_imgs(cls):
-    for char in cls.book[0].char_list:
+    cls.images = {}
+    sh_num = cls.getvar('sheet_id_var')
+    for char in cls.book[sh_num].char_list:
       img_data = create_img_data(char.data)
       img_name = "i" + str(char.id)
       cls.images[img_name] = PhotoImage(master=cls, data=img_data, format="PPM")
@@ -50,8 +71,10 @@ class SheetFrame(Frame):
     cls.create_sheet_imgs()
     img_grids = []
     sh_id = cls.getvar('sheet_id_var')
-    for char in cls.book.sheets[sh_id].char_list:
-      img_grids.append(char.id)
+    sheet = cls.book[sh_id]
+    if sheet is not None:
+      for char in sheet.char_list:
+        img_grids.append(char.id)
     for grid in range(128):
       (y, x) = divmod(grid, 16)
       start_x = x * 49 + 2
@@ -78,7 +101,7 @@ class SheetFrame(Frame):
     char_num = int(obj_tag[1:])
     AddCharDialog(event.widget.nametowidget('.nge'), char_num)
 
-  def update_sheet_sel(cls, *args):
+  def update_sheet_sel(cls, event=None):
     ch_id = cls.getvar('char_id_var')
     old_coords = cls.sheet_canv.coords('select_rect')
     new_coords = cls.sheet_canv.coords('i'+str(ch_id))
@@ -87,16 +110,17 @@ class SheetFrame(Frame):
     cls.sheet_canv.move('select_rect', diff_x, diff_y)
     cls.sheet_canv.tag_raise('select_rect', cls.sheet_canv.find_all()[-1])
   
-  def update_char_img(cls):
+  def update_char_img(cls, event=None):
     sh_id = cls.getvar('sheet_id_var')
     ch_id = cls.getvar('char_id_var')
     char_data = cls.book[sh_id].char_by_id(ch_id).data
     img_data = create_img_data(char_data)
     cls.images["i" + str(ch_id)].configure(data=img_data)
 
-  def update_sheet(cls, *args):
+  def update_sheet(cls):
     cls.sheet_canv.delete(cls.sheet_canv.find_all())
     cls.sheet_grid_setup()
+    cls.update_sheet_sel()
 
   def mod_char(cls, mod_id, action):
     r_tag = 'r' + mod_id

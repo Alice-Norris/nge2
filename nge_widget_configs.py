@@ -1,4 +1,10 @@
 from tkinter import VERTICAL
+# Each of these variables contain configurations
+# for each frame per widget type. In the case of
+# more than one widget of a type in a frame, they
+# are grouped as a list of tuples of dictionaries.
+# The first entry in each tuple is the config for
+# that widget, and the second is the grid options.
 
 draw_subframe_cfg = ({
       "class_" : "Subframe",
